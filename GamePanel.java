@@ -5,7 +5,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public class GamePanel extends JPanel {
-    final int width = 500, height = 200, tileSize = 3;
+    final int width = 70, height = 510, tileSize = 2;
     final Tile[][] world = new Tile[width][height];
     final List<Ant> ants = new ArrayList<>();
     final AntPathfinder pathfinder = new AntPathfinder(width / 2, height / 2);
@@ -23,7 +23,7 @@ public class GamePanel extends JPanel {
         world[width / 2][height / 2].type = Tile.Type.TUNNEL;
 
         // Spawn food
-        for (int i = 0; i < 60; i++) {
+        for (int i = 0; i < 30; i++) {
             int fx = (int)(Math.random() * width);
             int fy = (int)(Math.random() * height);
             world[fx][fy].type = Tile.Type.FOOD;
@@ -64,11 +64,24 @@ public class GamePanel extends JPanel {
                 // Pheromone trail overlay
                 if (tile.pheromoneStrength > 0) {
                     int alpha = Math.min(255, (int)(tile.pheromoneStrength * 2));
+
                     Set<Integer> trailIDs = tile.getPheromoneTrailIDs();
-                    int colorHash = (trailIDs.isEmpty()) ? 0 : trailIDs.iterator().next() * 997;  // Use the first trail ID if available
-                    Color trailColor = new Color((colorHash >> 16) & 0xFF, (colorHash >> 8) & 0xFF, colorHash & 0xFF, alpha);
-                    g.setColor(trailColor);
-                    g.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
+                    if (!trailIDs.isEmpty()) {
+                        int trailID = trailIDs.iterator().next();
+
+                        // Generate a unique hue using golden angle spacing for better distribution
+                        float goldenAngle = 137.508f;
+                        float hue = (trailID * goldenAngle) % 360;
+
+                        float saturation = 0.85f; // High saturation
+                        float brightness = 0.95f; // High brightness
+
+                        Color baseColor = Color.getHSBColor(hue / 360f, saturation, brightness);
+                        Color trailColor = new Color(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), alpha);
+
+                        g.setColor(trailColor);
+                        g.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
+                    }
                 }
             }
         }
