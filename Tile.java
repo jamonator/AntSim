@@ -31,7 +31,7 @@ public class Tile {
 
     public void decayTrail() {
         if (pheromoneStrength > 0) {
-            pheromoneStrength -= 0.7;
+            pheromoneStrength -= 0.3;
             if (pheromoneStrength <= 0) {
                 pheromoneStrength = 0;
                 pheromoneTrailIDs.clear();  // Clear all trail IDs when the trail fades
