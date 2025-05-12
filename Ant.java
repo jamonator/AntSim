@@ -21,6 +21,10 @@ public class Ant {
         this.pathfinder = pathfinder;
     }
 
+    public boolean isQueen() {
+        return false;
+    }   
+
     public void update(Tile[][] world) {
         if (System.currentTimeMillis() < stopTime) {
             return;
