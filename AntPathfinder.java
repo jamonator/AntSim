@@ -34,6 +34,7 @@ public class AntPathfinder {
             int[] pos = q.poll();
             int x = pos[0], y = pos[1];
 
+            // Check if we've reached the goal
             if (toNest && x == goalX && y == goalY) {
                 return reconstructPath(parent, startX, startY, x, y);
             }
@@ -41,15 +42,26 @@ public class AntPathfinder {
                 return reconstructPath(parent, startX, startY, x, y);
             }
 
-            for (int[] dir : new int[][]{{1,0},{-1,0},{0,1},{0,-1}}) {
+            // Explore neighboring tiles
+            for (int[] dir : new int[][]{{1, 0}, {-1, 0}, {0, 1}, {0, -1}}) {
                 int nx = x + dir[0], ny = y + dir[1];
+
+                // Make sure the tile is within bounds
                 if (nx >= 0 && ny >= 0 && nx < w && ny < h && !visited[nx][ny]) {
                     Tile t = world[nx][ny];
                     boolean validStep = false;
 
-                    if (toNest || t.type == Tile.Type.FOOD) {
+                    // Check if the step is valid based on the context (to nest or food)
+                    if (toNest) {
+                        // Only allow movement on TUNNEL tiles when going back to the nest
+                        if (t.type == Tile.Type.TUNNEL) {
+                            validStep = true;
+                        }
+                    } else if (t.type == Tile.Type.FOOD && t.foodAmount > 0) {
+                        // Allow movement if the tile is food
                         validStep = true;
                     } else if (t.hasTrail()) {
+                        // If there's a pheromone trail, follow it
                         if (trailID == -1 || t.getPheromoneTrailIDs().contains(trailID)) {
                             validStep = true;
                             if (trailID == -1) {
@@ -58,6 +70,7 @@ public class AntPathfinder {
                         }
                     }
 
+                    // Proceed if the step is valid
                     if (validStep) {
                         visited[nx][ny] = true;
                         parent[nx][ny][0] = x;
@@ -67,7 +80,7 @@ public class AntPathfinder {
                 }
             }
         }
-        return null;
+        return null; // No path found
     }
 
     // The reconstructPath method, which reconstructs the path from the parent array.
