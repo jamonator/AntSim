@@ -12,6 +12,9 @@ public class Ant {
     private static int nextTrailID = 1;  // shared across all ants
     private int myTrailID = -1;
 
+    private long stopTime = 0;
+    private static final Random random = new Random();
+
     public Ant(int x, int y, AntPathfinder pathfinder) {
         this.x = x;
         this.y = y;
@@ -19,6 +22,10 @@ public class Ant {
     }
 
     public void update(Tile[][] world) {
+        if (System.currentTimeMillis() < stopTime) {
+            return;
+        }
+
         int newX = x, newY = y;
 
         if (carryingFood) {
@@ -31,10 +38,9 @@ public class Ant {
             newX = step[0];
             newY = step[1];
 
-            // Lay trail with ID
             Tile current = world[x][y];
             current.pheromoneStrength = 100;
-            current.addPheromoneTrailID(myTrailID);  // Add trail ID to the list of trails on the tile
+            current.addPheromoneTrailID(myTrailID);
 
             if (newX == pathfinder.getNestX() && newY == pathfinder.getNestY()) {
                 carryingFood = false;
@@ -42,17 +48,44 @@ public class Ant {
             }
 
         } else {
+            // Check if the assigned trail has disappeared
+            if (myTrailID != -1) {
+                boolean trailStillExists = false;
+
+                for (int dx = -1; dx <= 1; dx++) {
+                    for (int dy = -1; dy <= 1; dy++) {
+                        int checkX = x + dx;
+                        int checkY = y + dy;
+
+                        if (isValid(world, checkX, checkY)) {
+                            if (world[checkX][checkY].getPheromoneTrailIDs().contains(myTrailID)) {
+                                trailStillExists = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (trailStillExists) break;
+                }
+
+                if (!trailStillExists) {
+                    myTrailID = -1;  // Trail is gone — allow joining a new one
+                }
+            }
+
             if (path == null || path.isEmpty()) {
-                // Find first pheromone trail and lock to its ID
                 path = pathfinder.findTrailToFood(world, x, y, myTrailID);
                 if (path == null) {
                     int[][] dirs = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
-                    int[] dir = dirs[(int) (Math.random() * dirs.length)];
+                    int[] dir = dirs[random.nextInt(dirs.length)];
                     newX = x + dir[0];
                     newY = y + dir[1];
 
                     if (isValid(world, newX, newY) && world[newX][newY].type == Tile.Type.DIRT) {
                         world[newX][newY].type = Tile.Type.TUNNEL;
+
+                        if (random.nextDouble() < 0.09) {
+                            stopTime = System.currentTimeMillis() + (long) (500 + random.nextDouble() * 2500);
+                        }
                     }
                 }
             } else {
@@ -68,16 +101,12 @@ public class Ant {
             if (!carryingFood && tile.type == Tile.Type.FOOD && tile.foodAmount > 0) {
                 carryingFood = true;
                 tile.foodAmount--;
+
                 if (tile.foodAmount <= 0) {
                     tile.type = Tile.Type.TUNNEL;
                 }
 
-                // Check if there is an existing pheromone trail attached to the food
-                if (tile.getPheromoneTrailIDs().contains(myTrailID)) {
-                    // If there is a trail, join that trail
-                    // Don't change myTrailID since it's already part of the trail
-                } else {
-                    // If no trail exists, create a new one
+                if (!tile.getPheromoneTrailIDs().contains(myTrailID)) {
                     if (myTrailID == -1) {
                         myTrailID = nextTrailID++;
                     }
