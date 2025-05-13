@@ -11,7 +11,7 @@ public class Ant {
     private List<int[]> path = null;
     private static int nextTrailID = 1;  // shared across all ants
     private int myTrailID = -1;
-
+    protected Color color = Color.RED;  // Default ant color
     private long stopTime = 0;
     private static final Random random = new Random();
 
@@ -21,9 +21,17 @@ public class Ant {
         this.pathfinder = pathfinder;
     }
 
+    public Color getColor() {
+        return color;
+    }
+
+    public long getStopTime() {
+        return stopTime;
+    }
+
     public boolean isQueen() {
         return false;
-    }   
+    }
 
     public void update(Tile[][] world) {
         if (System.currentTimeMillis() < stopTime) {
@@ -49,6 +57,9 @@ public class Ant {
             if (newX == pathfinder.getNestX() && newY == pathfinder.getNestY()) {
                 carryingFood = false;
                 path = null;
+
+                // Increment food counter only when food is dropped at the nest
+                GamePanel.totalFoodCollected++;
             }
 
         } else {
@@ -126,8 +137,7 @@ public class Ant {
             x = newX;
             y = newY;
         }
-    }
-
+    }    
     private boolean isValid(Tile[][] world, int x, int y) {
         return x >= 0 && y >= 0 && x < world.length && y < world[0].length;
     }
