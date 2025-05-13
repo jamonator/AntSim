@@ -1,6 +1,8 @@
 import java.util.Random;
 
 public class QueenAnt extends Ant {
+    private static final int EGG_COST = 50;
+    private static final long HATCH_DELAY = 4 * 60 * 1000; // 2 minutes
     private long nextMoveTime = 0;
     private static final Random random = new Random();
     public static final int WIDTH = 2;  // tiles wide
@@ -61,6 +63,10 @@ public class QueenAnt extends Ant {
             tryMove(world);
             nextMoveTime = System.currentTimeMillis() + 1000 + random.nextInt(1000);  // 1-2 seconds delay
         }
+        if (random.nextDouble() < 0.5 && GamePanel.totalFoodCollected >= EGG_COST) {  // ~30% chance per update
+            GamePanel.totalFoodCollected -= EGG_COST;
+            GamePanel.eggsList.add(new Egg(x, y, HATCH_DELAY));  // Adjust as needed
+        }
     }
 
     private void tryMove(Tile[][] world) {
@@ -84,3 +90,4 @@ public class QueenAnt extends Ant {
         }
     }
 }
+
