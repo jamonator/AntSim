@@ -1,17 +1,25 @@
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 public class GamePanel extends JPanel {
-    final int width = 100, height = 70, tileSize = 4;
+    final int width = 90, height = 510, tileSize = 2;
     final Tile[][] world = new Tile[width][height];
-    final List<Ant> ants = new ArrayList<>();
+    public static List<Ant> antsList;  // List to store ants 
     final AntPathfinder pathfinder = new AntPathfinder(width / 2, height / 2);
     private boolean queenCreated = false; // Flag to ensure only one queen is created
+    public static int totalFoodCollected = 0;  // Food collected counter
+    public static List<Egg> eggsList = new ArrayList<>();
+    private List<Point> nurseryTiles;
+    private Nest nest;
 
     public GamePanel() {
+        nest = new Nest(45, 255, 90, 510); // Or wherever your nest center is
+        nurseryTiles = nest.getNurseryArea(5);
+        antsList = new ArrayList<>();  // Initialize ants list
+        eggsList = new ArrayList<>();  // Initialize eggs list
         setPreferredSize(new Dimension(width * tileSize, height * tileSize));
         setBackground(Color.BLACK);
 
@@ -33,18 +41,23 @@ public class GamePanel extends JPanel {
         }
 
         // Spawn ants
-        for (int i = 0; i < 50; i++) {
-            ants.add(new Ant(width / 2, height / 2, pathfinder));
+        for (int i = 0; i < 20; i++) {
+            antsList.add(new Ant(width / 2, height / 2, pathfinder));
         }
 
         // Create the nest around the queen's center (width, height, nest size)
-        Nest nest = new Nest(width / 2, height / 2, 20, 20); // You can adjust the size
+        Nest nest = new Nest(width / 2, height / 2, 20, 20); // Adjust size if needed
 
         // Queen Ant (Ensure only one queen is added)
         if (!queenCreated) {
             QueenAnt queen = new QueenAnt(width / 2, height / 2, pathfinder, nest);  // Pass the nest
-            ants.add(queen);
+            antsList.add(queen);
             queenCreated = true;  // Set flag to true after queen is created
+        }
+
+        // NurseAnts
+        for (int i = 0; i < 5; i++) { // Spawn 10 NurseAnts (adjust as needed)
+            antsList.add(new NurseAnt(width / 2, height / 2, pathfinder, nest, this));
         }
 
         // Main game loop
@@ -55,18 +68,32 @@ public class GamePanel extends JPanel {
                 }
             }
 
-            for (Ant ant : ants) {
+            for (Ant ant : antsList) {
                 ant.update(world);
             }
+
+            // Update eggs
+            List<Egg> hatchedEggs = new ArrayList<>();
+            for (Egg egg : eggsList) {
+                if (egg.isReadyToHatch()) {
+                    antsList.add(new Ant(egg.getX(), egg.getY(), pathfinder));
+                    hatchedEggs.add(egg);
+                }
+            }
+            eggsList.removeAll(hatchedEggs);
 
             repaint();
         }).start();
     }
 
+    public void spawnAnt(Ant ant) {
+        antsList.add(ant);  // Add a new ant to the list
+    }
+
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-
+        
         // Drawing the world and pheromone trails
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
@@ -102,8 +129,22 @@ public class GamePanel extends JPanel {
             }
         }
 
+        // Draw eggs with black outline
+        for (Egg egg : eggsList) {
+            int drawX = egg.getX() * tileSize;
+            int drawY = egg.getY() * tileSize;
+
+            // Fill the egg
+            g.setColor(egg.getColor());
+            g.fillRect(drawX, drawY, tileSize, tileSize);
+
+            // Draw the black outline
+            g.setColor(Color.BLACK);
+            g.drawRect(drawX, drawY, tileSize, tileSize);
+        }
+
         // Draw ants
-        for (Ant ant : ants) {
+        for (Ant ant : antsList) {
             if (ant.isQueen()) {
                 QueenAnt queen = (QueenAnt) ant;
                 QueenAnt.Direction dir = queen.getFacingDirection();
@@ -118,16 +159,35 @@ public class GamePanel extends JPanel {
 
                 // Rotate queen rectangle based on direction
                 switch (dir) {
-                    case UP -> g.fillRect(drawX, drawY - h + tileSize, w, h);
-                    case DOWN -> g.fillRect(drawX, drawY, w, h);
-                    case LEFT -> g.fillRect(drawX - h + tileSize, drawY, h, w);
-                    case RIGHT -> g.fillRect(drawX, drawY, h, w);
+                    case UP -> g.fillRect(drawX + w / 4, drawY, w / 2, h);  // Facing up
+                    case DOWN -> g.fillRect(drawX + w / 4, drawY + h / 2, w / 2, h);  // Facing down
+                    case LEFT -> g.fillRect(drawX, drawY + h / 4, w, h / 2);  // Facing left
+                    case RIGHT -> g.fillRect(drawX + w / 2, drawY + h / 4, w, h / 2);  // Facing right
                 }
             } else {
-                // Worker ants
-                g.setColor(ant.carryingFood ? Color.ORANGE : Color.RED);
+                g.setColor(ant.getColor());  // Use each ant's custom color
                 g.fillRect(ant.x * tileSize, ant.y * tileSize, tileSize, tileSize);
             }
         }
+
+        // Display some debug information
+        g.setColor(Color.WHITE);
+        g.drawString("Food collected: " + totalFoodCollected, 10, 10);
+        g.drawString("Ants: " + antsList.size(), 10, 25);
+        g.drawString("Eggs: " + eggsList.size(), 10, 40);
+    }
+
+
+    public List<Point> getNurseryTiles() {
+        return nurseryTiles;
+    }
+
+    public boolean tileHasEgg(int x, int y) {
+        for (Egg egg : eggsList) {
+            if (egg.getX() == x && egg.getY() == y) {
+                return true;
+            }
+        }
+        return false;
     }
 }
