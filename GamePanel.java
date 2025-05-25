@@ -17,7 +17,7 @@ public class GamePanel extends JPanel {
 
     public GamePanel() {
         nest = new Nest(45, 255, 90, 510); // Or wherever your nest center is
-        nurseryTiles = nest.getNurseryArea(5);
+        nurseryTiles = nest.getNurseryArea(15);
         antsList = new ArrayList<>();  // Initialize ants list
         eggsList = new ArrayList<>();  // Initialize eggs list
         setPreferredSize(new Dimension(width * tileSize, height * tileSize));
@@ -34,14 +34,15 @@ public class GamePanel extends JPanel {
         world[width / 2][height / 2].type = Tile.Type.TUNNEL;
 
         // Spawn food
-        for (int i = 0; i < 30; i++) {
+        for (int i = 0; i < 40; i++) {
             int fx = (int)(Math.random() * width);
             int fy = (int)(Math.random() * height);
             world[fx][fy].type = Tile.Type.FOOD;
         }
 
         // Spawn ants
-        for (int i = 0; i < 20; i++) {
+        for (int i = 0; i < 10; i++) {
+            System.out.println("[+] Worker ant created!");
             antsList.add(new Ant(width / 2, height / 2, pathfinder));
         }
 
@@ -56,7 +57,8 @@ public class GamePanel extends JPanel {
         }
 
         // NurseAnts
-        for (int i = 0; i < 5; i++) { // Spawn 10 NurseAnts (adjust as needed)
+        for (int i = 0; i < 3; i++) { // Spawn 10 NurseAnts (adjust as needed)
+            System.out.println("[+] Nurse ant created!");
             antsList.add(new NurseAnt(width / 2, height / 2, pathfinder, nest, this));
         }
 
@@ -81,6 +83,11 @@ public class GamePanel extends JPanel {
                 }
             }
             eggsList.removeAll(hatchedEggs);
+
+            // Check if all food is collected
+            if (isAllFoodCollected()) {
+                resetSimulation();
+            }
 
             repaint();
         }).start();
@@ -190,4 +197,59 @@ public class GamePanel extends JPanel {
         }
         return false;
     }
+
+    public boolean isAllFoodCollected() {
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                if (world[x][y].type == Tile.Type.FOOD) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    public void resetSimulation() {
+        System.out.println("[!] Resetting simulation...");
+
+        // Reset world
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                world[x][y] = new Tile(Tile.Type.DIRT);
+            }
+        }
+
+        // Clear ants and eggs
+        antsList.clear();
+        eggsList.clear();
+
+        // Reset nest center
+        world[width / 2][height / 2].type = Tile.Type.TUNNEL;
+
+        // Respawn food
+        for (int i = 0; i < 40; i++) {
+            int fx = (int)(Math.random() * width);
+            int fy = (int)(Math.random() * height);
+            world[fx][fy].type = Tile.Type.FOOD;
+        }
+
+        // Respawn ants
+        for (int i = 0; i < 10; i++) {
+            System.out.println("[+] Worker ant respawned!");
+            antsList.add(new Ant(width / 2, height / 2, pathfinder));
+        }
+
+        // Respawn queen
+        QueenAnt queen = new QueenAnt(width / 2, height / 2, pathfinder, nest);
+        antsList.add(queen);
+
+        // Respawn nurse ants
+        for (int i = 0; i < 3; i++) {
+            System.out.println("[+] Nurse ant respawned!");
+            antsList.add(new NurseAnt(width / 2, height / 2, pathfinder, nest, this));
+        }
+        totalFoodCollected = 0; // reset counter
+
+    }
 }
+
