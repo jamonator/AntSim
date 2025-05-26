@@ -3,6 +3,8 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.HashSet; // <-- Add this
+
 
 public class GamePanel extends JPanel {
     final int width = 90, height = 510, tileSize = 2;
@@ -14,6 +16,8 @@ public class GamePanel extends JPanel {
     public static List<Egg> eggsList = new ArrayList<>();
     private List<Point> nurseryTiles;
     private Nest nest;
+    public static QueenAnt queenAnt;
+    
 
     public GamePanel() {
         nest = new Nest(45, 255, 90, 510); // Or wherever your nest center is
@@ -51,9 +55,9 @@ public class GamePanel extends JPanel {
 
         // Queen Ant (Ensure only one queen is added)
         if (!queenCreated) {
-            QueenAnt queen = new QueenAnt(width / 2, height / 2, pathfinder, nest);  // Pass the nest
-            antsList.add(queen);
-            queenCreated = true;  // Set flag to true after queen is created
+            queenAnt = new QueenAnt(width / 2, height / 2, pathfinder, nest);  // Pass the nest
+            antsList.add(queenAnt);
+            queenCreated = true;
         }
 
         // NurseAnts
@@ -100,7 +104,7 @@ public class GamePanel extends JPanel {
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        
+        Set<Integer> uniqueTrailIDs = new HashSet<>();
         // Drawing the world and pheromone trails
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
@@ -116,6 +120,7 @@ public class GamePanel extends JPanel {
                 if (tile.pheromoneStrength > 0) {
                     int alpha = Math.min(255, (int)(tile.pheromoneStrength * 2));
                     Set<Integer> trailIDs = tile.getPheromoneTrailIDs();
+                    uniqueTrailIDs.addAll(trailIDs);
                     if (!trailIDs.isEmpty()) {
                         int trailID = trailIDs.iterator().next();
 
@@ -177,11 +182,31 @@ public class GamePanel extends JPanel {
             }
         }
 
-        // Display some debug information
-        g.setColor(Color.WHITE);
-        g.drawString("Food collected: " + totalFoodCollected, 10, 10);
-        g.drawString("Ants: " + antsList.size(), 10, 25);
-        g.drawString("Eggs: " + eggsList.size(), 10, 40);
+        // Draw semi-transparent black background for stats box
+        Graphics2D g2d = (Graphics2D) g;
+        Color transparentBlack = new Color(0, 0, 0, 150); // RGBA: last value is alpha (transparency)
+        g2d.setColor(transparentBlack);
+        g2d.fillRect(5, 5, 150, 95); // Adjust width/height if you add more text
+
+        g2d.setColor(Color.WHITE);
+        g2d.drawString("Food collected: ", 10, 20);
+        g2d.drawString("Ants: ", 10, 35);
+        g2d.drawString("Eggs: ", 10, 50);
+        g2d.drawString("Trails: ", 10, 65);
+        g2d.drawString("Queen's thought:", 10, 80);
+
+        g2d.setColor(Color.GREEN);
+        g2d.drawString(String.valueOf(totalFoodCollected), 100, 20);
+        g2d.drawString(String.valueOf(antsList.size()), 55, 35);
+        g2d.drawString(String.valueOf(eggsList.size()), 55, 50);
+        g2d.setColor(new Color(173, 216, 230));
+        g2d.drawString(String.valueOf(uniqueTrailIDs.size()), 55, 65);
+
+        g2d.setColor(Color.YELLOW);
+        if (queenAnt != null) {
+            g2d.drawString(queenAnt.getQueenThoughts(), 10, 95);
+        }
+
     }
 
 
@@ -251,5 +276,7 @@ public class GamePanel extends JPanel {
         totalFoodCollected = 0; // reset counter
 
     }
-}
 
+
+
+}
