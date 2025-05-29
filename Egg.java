@@ -49,3 +49,4 @@ public class Egg {
         return Color.WHITE; // Use white for the egg's color
     }
 }
+
