@@ -2,6 +2,7 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Queue;
 import java.util.LinkedList;
+import java.awt.Point;
 
 public class AntPathfinder {
     private final int nestX, nestY;
@@ -96,4 +97,16 @@ public class AntPathfinder {
         path.add(0, new int[]{sx, sy}); // Add the start point at the beginning of the path
         return path;
     }
+
+    public List<Point> findPath(int startX, int startY, int goalX, int goalY, Tile[][] world) {
+        List<int[]> rawPath = bfs(world, startX, startY, goalX, goalY, true, -1);
+        if (rawPath == null) return null;
+
+        List<Point> path = new ArrayList<>();
+        for (int[] step : rawPath) {
+            path.add(new Point(step[0], step[1]));
+        }
+        return path;
+    }
+
 }
