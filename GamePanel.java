@@ -20,7 +20,7 @@ public class GamePanel extends JPanel {
     
 
     public GamePanel() {
-        nest = new Nest(45, 255, 90, 510); // Or wherever your nest center is
+        nest = new Nest(width / 2, height / 2, 20, 20); // Reassign to the field
         nurseryTiles = nest.getNurseryArea(15);
         antsList = new ArrayList<>();  // Initialize ants list
         eggsList = new ArrayList<>();  // Initialize eggs list
@@ -177,7 +177,11 @@ public class GamePanel extends JPanel {
                     case RIGHT -> g.fillRect(drawX + w / 2, drawY + h / 4, w, h / 2);  // Facing right
                 }
             } else {
-                g.setColor(ant.getColor());  // Use each ant's custom color
+                if (ant.carryingFood) {
+                    g.setColor(Color.YELLOW); // Yellow if carrying food
+                } else {
+                    g.setColor(ant.getColor());  // Use each ant's custom color
+                }
                 g.fillRect(ant.x * tileSize, ant.y * tileSize, tileSize, tileSize);
             }
         }
