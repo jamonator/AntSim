@@ -7,7 +7,7 @@ import java.util.Random;
 public class Ant {
     public int x, y;
     public boolean carryingFood = false;
-    private final AntPathfinder pathfinder;
+    protected AntPathfinder pathfinder;;
     private List<int[]> path = null;
     private static int nextTrailID = 1;  // shared across all ants
     private int myTrailID = -1;
